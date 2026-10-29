@@ -1,0 +1,3 @@
+# Integration test suite (FastAPI, SQLite, and Tool handlers without live LLM)
+# Implementation planned for Milestone 002.
+

@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-security-research"
+version = "0.1.0"
+description = "Research harness for policy-based verification of tool-using AI agents"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Security Research Team" }
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+]
+
+# Core dependencies are kept empty during Milestone 001 foundation.
+# Target application libraries (FastAPI, LangGraph, aiosqlite) and
+# data analysis libraries (pandas) will be added in their respective milestones.
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pydantic>=2.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["target_app", "security_engine"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra -q --strict-markers"
+markers = [
+    "unit: Unit tests for isolated components",
+    "integration: Integration tests for API and tool execution",
+    "security: Security property invariant verification tests",
+    "experiment: Benchmark and comparative evaluation tests",
+]
+
