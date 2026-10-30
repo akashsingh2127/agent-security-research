@@ -1,7 +1,7 @@
 # System Architecture & Boundaries
 
-**Milestone:** 001 — Foundation  
-**Status:** Architecture Specification (*Planned components documented; implementation pending*)
+**Milestone:** 002 — Secure Synthetic Target Application  
+**Status:** Target Application Implemented & Tested (*Agent orchestration and Security Engine planned*)
 
 ---
 
@@ -68,13 +68,17 @@ The primary objective of this architecture is to provide an empirical research h
 ## 2. Component Boundaries
 
 ### 2.1 Target Application (`target_app`)
-- **Role:** Simulates a realistic multi-tenant enterprise application where an AI assistant has access to database-interacting tools.
-- **Components:**
-  - *FastAPI Gateway:* Ingests requests with tenant/user identity contexts.
-  - *LangGraph Agent:* Executes prompt templates, manages conversational state, and triggers tool calls.
-  - *Tool Handlers:* Python functions executing data operations against SQLite.
-  - *SQLite Database:* Manages multi-tenant synthetic data with explicit tenant ownership columns.
-- **Trust Assumption:** The target agent is considered **compromised or fallible**. Prompt injection, jailbreaking, or reasoning failures may induce the agent to attempt unauthorized tool calls.
+- **Role:** Simulates a realistic multi-tenant enterprise application where private records are protected by backend ownership policies, and an AI assistant will later have access to database-interacting tools.
+- **Implemented Components (Milestone 002):**
+  - *FastAPI Gateway:* Ingests requests with correlation IDs (`X-Request-ID`) and Bearer token headers.
+  - *Authentication Provider (`auth.py`):* Deterministically maps pre-shared local research tokens to authenticated principals (`user_a`, `user_b`, `user_c`).
+  - *Authorization Service (`service.py`):* Enforces strict backend record ownership (`caller == owner_id`) on all protected reads and modifications.
+  - *Audit Logger (`audit.py`):* Persists append-only audit events (`event_id`, `principal_id`, `action`, `resource_id`, `resource_owner`, `auth_decision`, `outcome`, `request_id`).
+  - *SQLite Database (`database.py`, `seed.py`):* Holds synthetic multi-tenant tables (`users`, `records`, `audit_events`) with deterministic, idempotent seed data.
+- **Planned Components (Milestone 003):**
+  - *LangGraph Agent:* Conversational agent controller connecting prompts and local Ollama models.
+  - *Tool Handlers:* Explicit tool functions wrapping target application services for agent invocation.
+- **Trust Assumption:** The target agent is considered **compromised or fallible**. Prompt injection, jailbreaking, or reasoning failures may induce the agent to attempt unauthorized tool calls. Backend controls enforce ground truth.
 
 ### 2.2 Security Engine (`security_engine`)
 - **Role:** Independent evaluation harness capable of judging whether an agent's actions conformed to formal security policies.
@@ -120,8 +124,9 @@ When an evaluation run is executed:
 ## 5. Architectural Status
 
 - **System boundaries defined:** Milestone 001 (**Implemented**)
-- **Target App implementation:** *Planned* (Milestone 002)
-- **Security Engine implementation:** *Planned* (Milestone 003)
-- **Baseline integration:** *Planned* (Milestone 004)
-- **Any operational security guarantees:** **Unverified** (No code is executed yet)
+- **Target App implementation:** Milestone 002 (**Implemented & Tested**)
+- **Target Agent & Tool bindings:** *Planned* (Milestone 003)
+- **Security Engine implementation:** *Planned* (Milestone 004)
+- **Baseline integration:** *Planned* (Milestone 005)
+- **Any operational security guarantees:** **Unverified** (Direct backend invariants verified under tested conditions; agent-mediated security remains unverified)
 

@@ -1,7 +1,7 @@
 # Security Requirements & Formal Invariants
 
-**Milestone:** 001 — Foundation  
-**Status:** Requirements Specification (*Defined; implementation and verification pending*)
+**Milestone:** 002 — Secure Synthetic Target Application  
+**Status:** Requirements & Invariants Tested at Backend Layer (*Agent-mediated verification pending*)
 
 ---
 
@@ -61,13 +61,16 @@ A test run observing an active session for User A is marked as a **VIOLATION (FA
 
 ---
 
-## 4. Requirement Verification Status
+## 4. Requirement Verification Status & Test Mapping
 
-| Requirement | Specification | Implementation | Automated Tests | Verification Status |
+| Requirement | Specification | Implementation | Concrete Automated Tests | Verification Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **SEC-01 (Read Isolation)** | Complete | *Planned* (M002/M003) | *Planned* (M003) | **Unverified** |
-| **SEC-01 (Modify Isolation)** | Complete | *Planned* (M002/M003) | *Planned* (M003) | **Unverified** |
+| **SEC-01 (Read Isolation)** | Complete | Implemented (M002) | `tests/integration/test_records_api.py::test_sec01_user_a_cannot_read_user_b_record` | **No violation observed under tested conditions** (Direct API) |
+| **SEC-01 (Modify Isolation)** | Complete | Implemented (M002) | `tests/integration/test_records_api.py::test_sec01_user_a_cannot_modify_user_b_record` | **No violation observed under tested conditions** (Direct API) |
 | **SEC-02 (Least Privilege)** | Outline | *Planned* (M004) | *Planned* (M004) | **Unverified** |
-| **SEC-03 (Parameter Validation)** | Outline | *Planned* (M002) | *Planned* (M002) | **Unverified** |
-| **SEC-04 (Audit Immutability)** | Outline | *Planned* (M003) | *Planned* (M003) | **Unverified** |
+| **SEC-03 (Parameter Validation)** | Complete | Implemented (M002) | `tests/unit/test_schemas.py::*`, `test_records_api.py::test_user_cannot_change_record_owner`, `test_empty_update_request_rejected` | **No violation observed under tested conditions** |
+| **SEC-04 (Audit Immutability)** | Outline | Implemented (M002 app layer) | `tests/unit/test_audit.py::test_audit_persistence_append_only` | **No violation observed under tested conditions** (App interface only; SQLite file immutability unverified) |
+
+> [!NOTE]
+> In accordance with our epistemic invariant (*absence of test failure does not prove security*), passing direct API tests verifies backend access controls under the tested synthetic test suite. It does **not** guarantee that an AI agent orchestrating tools in Milestone 003 cannot be tricked into executing unintended operations. Agent-mediated security remains **Unverified**.
 

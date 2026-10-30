@@ -1,7 +1,7 @@
 # Testing & Verification Strategy
 
-**Milestone:** 001 — Foundation  
-**Status:** Strategy Specification (*Test structure defined; test cases planned*)
+**Milestone:** 002 — Secure Synthetic Target Application  
+**Status:** Tier 1 and Tier 2 Active (*Agent and benchmark tiers planned*)
 
 ---
 
@@ -100,12 +100,12 @@ Automated tests are managed via `pytest` configured in `pyproject.toml`:
 
 ## 5. Current Verification Status
 
-| Tier | Category | Current Count | Pass Count | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **Tier 1** | Unit | 0 | 0 | *Planned* |
-| **Tier 2** | Integration | 0 | 0 | *Planned* |
-| **Tier 3** | Security Invariants | 0 | 0 | *Planned* |
-| **Tier 4** | Regression | 0 | 0 | *Planned* |
-| **Tier 5** | Experiments | 0 | 0 | *Planned* |
-| **Overall** | All Suites | 0 | 0 | **Unverified** |
+| Tier | Category | Current Count | Pass Count | Status | Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Tier 1** | Unit | 12 | 12 | **Passing** | Policy checks, Pydantic schemas, and audit model tests. |
+| **Tier 2** | Integration | 12 | 12 | **Passing** | Health, CRUD, auth rejection, 404/422 handling, test isolation. |
+| **Tier 3** | Security Invariants | 4 | 4 | **Passing** | SEC-01 read & modification isolation, state immutability, canary nondisclosure. |
+| **Tier 4** | Regression | 0 | 0 | *Planned* | Post-exploit regression replay suite (M004). |
+| **Tier 5** | Experiments | 0 | 0 | *Planned* | Controlled prompt evaluation against Promptfoo (M005). |
+| **Overall** | All Active Tests | 24 | 24 | **Passing** | 24 passed in 1.23s. Epistemic invariant applies: guarantees bounded to tested conditions. |
 

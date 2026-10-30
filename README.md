@@ -1,6 +1,6 @@
 # Policy-Based Security Verification for Tool-Using AI Agents
 
-[![Milestone](https://img.shields.io/badge/Milestone-001%20Foundation-blue.svg)](#implementation-status)
+[![Milestone](https://img.shields.io/badge/Milestone-002%20Target%20App-green.svg)](#implementation-status)
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](pyproject.toml)
 [![Status](https://img.shields.io/badge/Status-Pre--Alpha%20%2F%20Research-orange.svg)](#project-goal--research-hypothesis)
 
@@ -71,84 +71,85 @@ flowchart LR
 
 ## 3. Implementation Status
 
-Current Milestone: **Milestone 001 — Foundation Only**
+Current Milestone: **Milestone 002 — Secure Synthetic Target Application**
 
 | Component | Category | Current Status | Description |
 | :--- | :--- | :--- | :--- |
 | **Repository Structure** | Architecture | **Implemented** | Foundational layout, configuration, and documentation templates. |
 | **Harness Engineering Rules** | Governance | **Implemented** | Enforceable agent guidelines defined in [`AGENTS.md`](AGENTS.md). |
 | **Security Requirements** | Specification | **Implemented** | Formal invariants (SEC-01 multi-tenant isolation) in [`docs/security-requirements.md`](docs/security-requirements.md). |
-| **Threat Model** | Specification | **Implemented** | Initial trust boundaries and attack vectors in [`docs/threat-model.md`](docs/threat-model.md). |
-| **Target App API** | Runtime | *Planned* | FastAPI service hosting tools and agent workflows. |
-| **Target LangGraph Agent** | Runtime | *Planned* | Tool-using agent orchestrated with LangGraph and local Ollama. |
-| **Security Verifier** | Runtime | *Planned* | Execution trace and SQLite state diff verification engine. |
-| **Promptfoo Baseline** | Evaluation | *Planned* | Comparative black-box evaluation suite. |
-| **Empirical Protocol** | Research | *Planned* | Controlled experiment execution and statistical measurement. |
-| **Any Security Guarantees** | Assurance | **Unverified** | No security properties are proven or satisfied at this stage. |
+| **Threat Model** | Specification | **Implemented** | Trust boundaries, attacker models, and mitigations in [`docs/threat-model.md`](docs/threat-model.md). |
+| **Target App API** | Runtime | **Implemented & Tested** | FastAPI service with SQLite, deterministic seeding, auth, ownership enforcement, and audit events. |
+| **Target LangGraph Agent** | Runtime | *Planned* | Tool-using agent orchestrated with LangGraph and local Ollama (Milestone 003). |
+| **Security Verifier** | Runtime | *Planned* | Execution trace and SQLite state diff verification engine (Milestone 004). |
+| **Promptfoo Baseline** | Evaluation | *Planned* | Comparative black-box evaluation suite (Milestone 005). |
+| **Empirical Protocol** | Research | *Planned* | Controlled experiment execution and statistical measurement (Milestone 005). |
+| **Any Security Guarantees** | Assurance | **Unverified** | Direct backend invariants verified under tested conditions; agent-mediated security remains unverified. |
 
 ---
 
-## 4. Provisional Tech Stack & Justifications
+## 4. Provisional Tech Stack & Dependency Management
 
+* **Primary Dependency Specification:** All project dependencies with explicit compatible version constraints are maintained in [`requirements.txt`](requirements.txt).
 * **Python 3.12+**: Modern type annotations, performance improvements, and stable ecosystem support.
-* **Ollama with Qwen (e.g., Qwen 2.5 3B/7B)**: Local, reproducible LLM inference allowing deterministic, offline, and cost-controlled agent testing.
-* **LangGraph**: Explicit state-machine-based agent orchestration with inspectable graph states.
-* **FastAPI**: Lightweight, asynchronous web framework for hosting the target application.
-* **SQLite**: Embedded relational database facilitating fast, deterministic state resetting and atomic state diff comparisons.
-* **Pydantic v2**: High-performance data validation and structured schema enforcement.
-* **pytest**: Standardized automated test framework for unit, integration, and security invariant tests.
-* **Pandas**: Structured tabular analysis of evaluation metrics across experiment runs.
-* **Promptfoo**: Industry-standard black-box LLM evaluation framework used as our comparative baseline.
+* **FastAPI & Uvicorn**: Asynchronous web framework hosting the target application API.
+* **SQLite**: Embedded relational database facilitating fast, deterministic state resetting, ACID transactions, and atomic state diff comparisons.
+* **Pydantic v2 & Pydantic-Settings**: High-performance data validation, structured schema enforcement, and environment configuration.
+* **pytest & HTTPX**: Automated test framework with isolated in-memory/temporary file test fixtures and API client testing.
+* **Ollama with Qwen** (*Planned M003*): Local, reproducible LLM inference allowing deterministic, offline, and cost-controlled agent testing.
+* **LangGraph** (*Planned M003*): Explicit state-machine-based agent orchestration with inspectable graph states.
+* **Pandas** (*Planned M005*): Structured tabular analysis of evaluation metrics across experiment runs.
+* **Promptfoo** (*Planned M005*): Industry-standard black-box LLM evaluation framework used as our comparative baseline.
 
 ### Deferred Technologies
-* **Docker**: Deferred to minimize environment friction during initial architectural bring-up. Local virtual environments are sufficient for Milestone 001. Containerization will be evaluated when multi-platform reproducibility is required.
+* **Docker**: Deferred to minimize environment friction during initial architectural bring-up. Local virtual environments are sufficient for Milestone 002. Containerization will be evaluated when multi-platform reproducibility is required.
 * **Streamlit**: UI dashboards are deferred. Initial milestones focus exclusively on CLI execution, automated test passes, and JSON/CSV experiment outputs.
 
 ---
 
-## 5. Current Limitations
+## 5. Local Setup, Execution & Testing Commands
 
-1. **No Executable Runtime**: Milestone 001 establishes the repository architecture, documentation, and harness governance only. Neither the target agent nor the security verifier is implemented yet.
-2. **Synthetic Data Assumption**: All test data and user identities are purely synthetic. No production data or external network integrations are modeled.
-3. **Local Hardware Dependency**: Agent evaluations require a running local Ollama instance once Milestone 002 is introduced.
+### Installation
+Dependencies are tracked in [`requirements.txt`](requirements.txt):
+```powershell
+python -m pip install -r requirements.txt
+```
 
----
+### Running the Target Application Locally
+```powershell
+python -m uvicorn target_app.app:app --host 127.0.0.1 --port 8000 --reload
+```
 
-## 6. Directory Layout
+### Running Automated Checks & Tests
+Execute all tests (unit and integration):
+```powershell
+python -m pytest -v
+```
 
-```text
-agent-security-research/
-├── .env.example                      # Safe environment variable template
-├── .gitignore                         # Comprehensive ignore rules
-├── AGENTS.md                          # Harness engineering instructions for AI agents
-├── pyproject.toml                     # Project metadata and baseline dev dependencies
-├── README.md                          # Project overview and status
-├── docs/                              # Project documentation
-│   ├── architecture.md               # System boundaries and evidence flows
-│   ├── security-requirements.md       # Testable security invariants (SEC-01)
-│   ├── testing-strategy.md            # Multi-tier testing hierarchy
-│   ├── threat-model.md                # Assets, threat vectors, and boundaries
-│   ├── decisions/                     # Architecture Decision Records (ADRs)
-│   │   └── ADR-001-project-structure.md
-│   └── research/                      # Research templates and protocols
-│       ├── experiment-protocol.md     # Controlled experiment specification
-│       └── literature-review.md       # Literature survey template
-├── target_app/                        # Target application source (Planned)
-├── security_engine/                   # Policy evaluation engine source (Planned)
-├── baselines/                         # External baseline runners (Promptfoo) (Planned)
-├── experiments/                       # Experiment scripts and run artifacts (Planned)
-└── tests/                             # Automated test suite
-    ├── unit/                          # Unit tests (Planned)
-    ├── integration/                   # Integration tests (Planned)
-    └── security/                      # Invariant property verification tests (Planned)
+Execute only security invariant verification tests:
+```powershell
+python -m pytest -m security -v
+```
+
+Execute only fast unit tests:
+```powershell
+python -m pytest -m unit -v
 ```
 
 ---
 
-## 7. Next Steps (Recommended Milestone 002)
+## 6. Current Limitations
 
-Proceed to **Milestone 002: Synthetic Target Application Foundation**, which will introduce:
-1. Synthetic multi-tenant database schema and deterministic SQLite fixture generation.
-2. Minimal FastAPI service with authenticated user contexts and CRUD endpoints.
-3. Initial unit and integration tests verifying application behavior in isolation before introducing agent orchestration.
+1. **Synthetic Token Authentication**: The target application uses pre-shared local Bearer tokens (`test-token-user-a`, `test-token-user-b`, `test-token-user-c`) scoped strictly to deterministic offline research evaluation. It does not implement production authentication (no password hashing, JWT signing, or OAuth2 workflows).
+2. **SQLite File-Level Audit Integrity**: Audit events are exposed strictly as append-only operations through the application service. However, because SQLite is an embedded file without hardware-enforced write-once storage, direct filesystem access could alter logs out-of-band. External verification is deferred to the planned `security_engine`.
+3. **No Agent Orchestration (Milestone 002)**: The AI agent, tool-calling loop, and adversarial prompt evaluation are not yet implemented. The application currently functions as a standalone secure multi-tenant API.
+
+---
+
+## 7. Next Steps (Recommended Milestone 003)
+
+Proceed to **Milestone 003: Agent Tool Integration & Instrumentation Foundation**, which will introduce:
+1. Pydantic tool definitions wrapping target application endpoints (`read_record`, `update_record`).
+2. Structured execution trace emission hooks for capturing tool invocations, arguments, and caller contexts.
+3. Minimal LangGraph agent controller wired to local Ollama.
 

@@ -1,7 +1,7 @@
 # Threat Model
 
-**Milestone:** 001 — Foundation  
-**Status:** Initial Specification (*Planned mitigations; unverified implementation*)
+**Milestone:** 002 — Secure Synthetic Target Application  
+**Status:** Backend Mitigations Implemented & Tested (*Agent and verifier layers planned*)
 
 ---
 
@@ -55,10 +55,12 @@ The threat model assumes an attacker with the following capabilities:
 
 ---
 
-## 5. Planned Mitigations & Defense Layers
+## 5. Mitigations & Defense Layers
 
-1. **Backend Invariant Checks (Target App Layer - Planned):** Tool functions must validate that the executing user's session token/identity matches the owner of the target `record_id`.
-2. **Policy-Based Verification (Security Engine Layer - Planned):** Independent audit of the full trace and state delta. Even if the backend fails or the agent masks its response, the verifier detects the unauthorized read/write.
+1. **Backend Ownership Invariant Checks (Target App Layer - Implemented in M002):** The API service layer strictly verifies that the authenticated caller (`principal_id`) matches `record.owner_id` for every protected read and modification. Unauthorized reads receive 403 with no record disclosure; unauthorized modifications leave persistent SQLite state unchanged.
+2. **Deterministic Parameter Schemas (Target App Layer - Implemented in M002):** Pydantic schemas forbid tampering with ownership (`owner_id`) and reject arbitrary extra fields or empty modification bodies.
+3. **Append-Only Internal Audit Log (Target App Layer - Implemented in M002):** Audit events capture principals, actions, resources, authorization decisions (`ALLOW`/`DENY`), and outcomes (`SUCCESS`, `DENIED_UNAUTHENTICATED`, `DENIED_UNAUTHORIZED`, `NOT_FOUND`, `ERROR`).
+4. **Policy-Based Verification (Security Engine Layer - Planned M004):** Independent audit of the full trace and state delta. Even if the backend fails or the agent masks its response, the verifier detects the unauthorized read/write.
 
 ---
 
@@ -66,6 +68,7 @@ The threat model assumes an attacker with the following capabilities:
 
 The following threats are explicitly out of scope for this research project:
 - **Host OS & Infrastructure Compromise:** Attacks targeting the host operating system, Python interpreter binaries, or SQLite engine vulnerabilities.
+- **Direct Database File Manipulation:** Attacks bypassing the application and writing directly to the `.sqlite` file on disk (SQLite audit-integrity limitation).
 - **Network Denial-of-Service (DoS):** Exhausting local machine compute or Ollama VRAM through high-concurrency requests.
 - **Physical Access:** Attackers with physical access to the test machine or local filesystem.
 - **Cryptographic Breaks:** Attacks attempting to break standard cryptographic hashes or SQLite file encryption.
@@ -74,5 +77,5 @@ The following threats are explicitly out of scope for this research project:
 
 ## 7. Status & Verification
 
-All threat mitigations and security properties described herein are **Planned** and currently **Unverified**. No operational code has yet been tested or proven resilient.
+Backend mitigation layers (1, 2, and 3) are **Implemented and Tested** at the direct API level. Agent-mediated threat resistance remains **Unverified** pending Milestone 003 bring-up.
 

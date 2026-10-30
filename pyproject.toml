@@ -20,16 +20,10 @@ classifiers = [
     "Topic :: Security",
 ]
 
-# Core dependencies are kept empty during Milestone 001 foundation.
-# Target application libraries (FastAPI, LangGraph, aiosqlite) and
-# data analysis libraries (pandas) will be added in their respective milestones.
+# Primary dependency constraints are maintained in root requirements.txt
+# to avoid independently maintained duplicate lists.
+# Runtime and development environments are provisioned via requirements.txt.
 dependencies = []
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0.0",
-    "pydantic>=2.0.0",
-]
 
 [tool.hatch.build.targets.wheel]
 packages = ["target_app", "security_engine"]
