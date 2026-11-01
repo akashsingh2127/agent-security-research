@@ -1,0 +1,16 @@
+# ==============================================================================
+# Project Dependencies (Primary Dependency List)
+# ==============================================================================
+# Explicit compatible version constraints for the local research harness.
+# Keep synchronized with pyproject.toml build/runtime configuration.
+# ==============================================================================
+
+# Core Target Application Runtime
+fastapi>=0.115.0,<1.0.0
+pydantic>=2.10.0,<3.0.0
+pydantic-settings>=2.0.0,<3.0.0
+uvicorn>=0.30.0,<1.0.0
+
+# Testing and Development Harness
+pytest>=8.0.0,<10.0.0
+httpx>=0.27.0,<1.0.0
