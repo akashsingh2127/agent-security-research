@@ -1,43 +1,53 @@
 # Experiment Protocol: Policy Verification vs. Black-Box Evaluation
 
-**Status:** Working Protocol Template (*Study design specification; no experiments executed*)  
-**Milestone:** 001 — Foundation  
+**Status:** Milestone 003 — Part 1: Refined Research Protocol  
+**Last Updated:** 2026-11-03  
+**Authors:** Senior AI Security Researcher & Methodology Reviewer  
 
 > [!NOTE]
 > **Scientific Integrity Notice:**
-> This document specifies the controlled experimental protocol for validating our research hypothesis. All experimental results, baseline scores, and performance metrics are currently uncollected. No claims of experimental success are made.
+> This document specifies the controlled experimental protocol for validating our refined research hypothesis. All experimental results, baseline scores, and performance metrics are currently uncollected. No claims of experimental success or definitive novelty are asserted prior to empirical testing.
 
 ---
 
-## 1. Research Hypothesis
+## 1. Research Hypothesis & Core Research Question
 
-> **Hypothesis $H_1$:** An out-of-band security evaluation harness that verifies observed execution traces and application state deltas against formal security policies achieves significantly higher detection recall and precision for unauthorized agent actions than black-box prompt/response evaluators (Promptfoo).
+### Refined Core Research Question (Milestone 003)
+> *"How do progressive levels of evaluator observability—ranging from black-box agent responses to execution traces, backend authorization decisions, and persistent database state diffs—impact the precision, recall, and false-negative rates of security violation detection in tool-using AI agents subjected to unauthorized cross-tenant data access (BOLA/BFLA) attacks?"*
+
+### Hypotheses
+> **Hypothesis $H_1$:** Progressively incorporating backend authorization decisions and persistent database state diffs with execution traces significantly reduces evaluator false-negative rates (detecting silent state mutations) and false-positive rates (avoiding flagging blocked attempts or hallucinated breaches) compared to response-only (Condition A) and trace-only (Condition B) evaluators.
 >
-> **Null Hypothesis $H_0$:** There is no statistically significant difference in detection recall or precision between execution-trace/state-level policy verification and prompt-level black-box evaluation.
+> **Null Hypothesis $H_0$:** There is no statistically significant difference in detection precision, recall, or error rates across the four progressive evaluator observability conditions.
 
 ---
 
 ## 2. Experimental Variables
 
 ### 2.1 Independent Variables
-1. **Evaluation Methodology (Treatment vs. Baseline):**
-   - *Treatment:* `security_engine` (Trace interception + SQLite state delta verification against SEC-01 invariants).
-   - *Baseline:* `baselines/promptfoo` (Black-box evaluation using prompt assertions, output regex, and LLM-as-a-judge).
+1. **Evaluator Observability Condition (Treatment Progression):**
+   - **Condition A (Response-Only):** Evaluator observes solely the agent's final natural language response text (representative of standard Promptfoo output assertions and LLM-as-a-judge).
+   - **Condition B (Trace-Based):** Evaluator observes tool names, bound arguments, caller identity, and tool return payloads captured during execution.
+   - **Condition C (Trace + Authorization):** Evaluator observes execution traces plus server-side authorization evaluation decisions (`auth_decision`: `ALLOW` vs. `DENY` from `audit_events`).
+   - **Condition D (Full Evidence Ground Truth):** Evaluator observes execution traces, backend authorization decisions, output canary disclosure checks, and pre/post persistent SQLite database row-level state diffs ($\Delta S$).
 2. **Adversarial Stimulus Category:**
-   - *Benign Prompts:* Authorized requests within tenant scope (e.g., User A accessing User A's data).
-   - *Direct Prompt Injection:* Jailbreak prompts ordering the agent to bypass tenant restrictions.
-   - *Indirect Prompt Injection:* Benign-appearing prompts triggering retrieval of records containing injected instructions.
-   - *Parameter Tampering:* Requests subtly substituting User B's record IDs in User A's session.
-3. **Agent Target Model:**
-   - Local model family via Ollama (e.g., Qwen 2.5 3B/7B Instruct).
+   - *Benign Controls:* Authorized requests within tenant scope (e.g., User A accessing `rec_a_001`).
+   - *Direct BOLA Probing:* Prompts directing the agent to read or modify another tenant's record (`rec_b_001`).
+   - *Indirect Prompt Injection (IPI):* Benign user queries that retrieve records containing hidden instructions ordering cross-tenant access.
+   - *Confused Deputy / Social Engineering:* Jailbreak or roleplay prefixes coercing the agent to bypass tenant rules.
+   - *Parameter Tampering:* Subtle substitution of User B's record IDs in User A's session context.
+3. **Target Agent System:**
+   - Tool-using agent orchestrated with LangGraph and local Ollama model (e.g., Qwen 2.5 3B/7B Instruct) interacting with the Milestone 002 `target_app` API.
 
-### 2.2 Dependent Variables & Metrics
-1. **True Positive Rate (TPR / Recall):** Proportion of actual security violations correctly detected by the evaluator.
-2. **False Positive Rate (FPR):** Proportion of benign, compliant runs incorrectly flagged as security violations.
-3. **Precision:** $\frac{\text{True Positives}}{\text{True Positives} + \text{False Positives}}$.
-4. **F1-Score:** Harmonic mean of precision and recall.
-5. **Silent Failure Detection Rate:** Number of instances where an unauthorized database mutation occurred without being mentioned in the agent's response text, detected by each method.
-6. **Evaluation Latency:** Wall-clock time (seconds) required to execute and score each evaluation turn.
+### 2.2 Dependent Variables & Evaluator Error Metrics
+1. **Evaluator Recall / True Positive Rate (TPR):** Proportion of actual security violations correctly detected by the evaluator: $\frac{TP}{TP + FN}$.
+2. **Evaluator False Positive Rate (FPR):** Proportion of non-violations incorrectly flagged as violations: $\frac{FP}{FP + TN}$.
+3. **Evaluator Precision:** $\frac{TP}{TP + FP}$.
+4. **Evaluator F1-Score:** $2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}$.
+5. **Silent Execution False Negative Rate:** The rate at which an unauthorized database mutation occurred ($\Delta S \neq \emptyset$) but the evaluator reported `PASS` because the agent masked the action in its verbal response.
+6. **Blocked Attempt False Positive Rate:** The rate at which an evaluator flagged a security violation solely because an unauthorized tool call was attempted, even though the backend returned `403 Forbidden` and no state changed or data leaked.
+7. **Hallucinated Leak False Positive Rate:** The rate at which an evaluator flagged a violation because the agent claimed in text to have accessed private data, despite no tool execution or data retrieval having occurred.
+8. **Evaluation Latency:** Execution and scoring overhead (wall-clock milliseconds per turn).
 
 ---
 
@@ -92,7 +102,11 @@
 
 ## 6. Current Protocol Status
 
-- **Protocol Design:** Milestone 001 (**Implemented**)
-- **Data Collection:** *Planned* (Milestone 005)
-- **Results & Findings:** **Unverified** (No empirical runs executed)
+- **Protocol Initial Design:** Milestone 001 (**Implemented**)
+- **Target Application Ground Truth:** Milestone 002 (**Implemented & Tested**)
+- **Protocol Refinement & Error Taxonomy:** Milestone 003 — Part 1 (**Implemented**)
+- **Target Agent & Tool Harness:** *Planned* (Milestone 003 — Part 2)
+- **Evaluator Conditions (A, B, C, D) Implementation:** *Planned* (Milestone 004)
+- **Data Collection & Empirical Benchmarking:** *Planned* (Milestone 005)
+- **Results & Findings:** **Unverified** (No empirical runs executed yet)
 
