@@ -1,12 +1,13 @@
 # Policy-Based Security Verification for Tool-Using AI Agents
 
-[![Milestone](https://img.shields.io/badge/Milestone-003%20Part%201.5%20Consolidation-blue.svg)](#implementation-status)
+[![Milestone](https://img.shields.io/badge/Milestone-003%20Part%202%20Finalized-blue.svg)](#implementation-status)
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](pyproject.toml)
 [![Status](https://img.shields.io/badge/Status-Pre--Alpha%20%2F%20Research-orange.svg)](#project-goal--research-hypothesis)
 
 A research-grade evaluation harness and benchmark environment designed to investigate whether security evaluations of tool-using AI agents can be made more reliable by verifying observed authorization decisions and application state against explicit, formal security policies.
 
-**Primary Research Document:** See [`docs/research/research-direction-and-scope.md`](docs/research/research-direction-and-scope.md) for the consolidated research framework, four evaluator conditions, evaluator error taxonomy, and independent ground-truth definitions.
+**Primary Research Document:** See [`docs/research/research-direction-and-scope.md`](docs/research/research-direction-and-scope.md) for the consolidated research framework, four evaluator conditions, evaluator error taxonomy, and independent ground-truth definitions.  
+**Architectural Decisions:** See [`docs/decisions/ADR-003-research-direction-and-next-architecture.md`](docs/decisions/ADR-003-research-direction-and-next-architecture.md) for ADR-003.
 
 ---
 
@@ -36,7 +37,7 @@ flowchart LR
     subgraph TargetApp["Target Application (System Under Test)"]
         direction TB
         API["FastAPI Endpoints"]
-        Agent["LangGraph Agent (Ollama / Qwen)"]
+        Agent["Agent Runner (Mock / Ollama Qwen)"]
         Tools["Tool Handlers"]
         DB[(SQLite Synthetic State)]
         API --> Agent
@@ -46,23 +47,24 @@ flowchart LR
 
     subgraph SecurityEngine["Security Engine (Independent Evaluator)"]
         direction TB
-        Capture["Trace & State Interceptor"]
-        Policies["Policy Invariant Engine"]
-        Verifier["State & Policy Verifier"]
-        Reporter["Verdict & Metrics Reporter"]
-        Capture --> Verifier
-        Policies --> Verifier
-        Verifier --> Reporter
+        Capture["Evidence Collectors (Trace, Audit, State Diff)"]
+        Evaluators["Evaluator Progression (Cond A, B, C, D)"]
+        GT["Independent Ground-Truth Oracle"]
+        Metrics["Metrics Engine (Wilson CIs, McNemar Tests)"]
+        Capture --> Evaluators
+        Capture --> GT
+        Evaluators --> Metrics
+        GT --> Metrics
     end
 
     subgraph Baseline["Baseline Evaluation"]
-        Promptfoo["Promptfoo Black-box Evaluator"]
+        Promptfoo["Promptfoo Industrial Baseline (Response & Trace Assertions)"]
     end
 
     User --> API
     Tools -.->|Passive Trace Observation| Capture
     DB -.->|Pre/Post State Diffs| Capture
-    Reporter <-->|Comparative Analysis| Baseline
+    Promptfoo --> Metrics
 ```
 
 ### Trust Boundary Separation
@@ -73,7 +75,7 @@ flowchart LR
 
 ## 3. Implementation Status
 
-Current Milestone: **Milestone 003 — Part 1.5: Research Consolidation & Methodology Alignment**
+Current Milestone: **Milestone 003 — Part 2: Experimental Design & Architecture Finalized**
 
 | Component | Category | Current Status | Description |
 | :--- | :--- | :--- | :--- |
@@ -82,11 +84,13 @@ Current Milestone: **Milestone 003 — Part 1.5: Research Consolidation & Method
 | **Security Requirements** | Specification | **Implemented** | Formal invariants (SEC-01 multi-tenant isolation) in [`docs/security-requirements.md`](docs/security-requirements.md). |
 | **Threat Model** | Specification | **Implemented** | Trust boundaries, attacker models, and mitigations in [`docs/threat-model.md`](docs/threat-model.md). |
 | **Research Scope & Reference** | Research | **Implemented** | Central reference in [`docs/research/research-direction-and-scope.md`](docs/research/research-direction-and-scope.md) defining conditions A-D and ground truth. |
+| **Experimental Protocol** | Research | **Implemented** | Controlled protocol, error taxonomy, sample sizes, and statistical plan in [`docs/research/experiment-protocol.md`](docs/research/experiment-protocol.md). |
+| **Architectural Decisions** | Architecture | **Implemented** | ADR-001, ADR-002, and ADR-003 recorded in [`docs/decisions/`](docs/decisions/). |
 | **Target App API** | Runtime | **Implemented & Tested** | FastAPI service with SQLite, deterministic seeding, auth, ownership enforcement, and audit events. |
-| **Target LangGraph Agent** | Runtime | *Planned* | Tool-using agent orchestrated with LangGraph and local Ollama (Milestone 003 Part 2). |
-| **Security Verifier** | Runtime | *Planned* | Execution trace and SQLite state diff verification engine (Milestone 004). |
-| **Promptfoo Baseline** | Evaluation | *Planned* | Comparative black-box evaluation suite (Milestone 005). |
-| **Empirical Protocol** | Research | *Planned* | Controlled experiment execution and statistical measurement (Milestone 005). |
+| **Target Agent Runner & Tools** | Runtime | *Planned* | Extensible `AgentRunner` (`MockAgentRunner` & `OllamaAgentRunner`) and tool dispatcher (Milestone 004). |
+| **Security Verifier & Evaluators** | Runtime | *Planned* | Evidence collectors, Evaluators A-D, and ground-truth oracle (Milestone 004). |
+| **Promptfoo Baseline** | Evaluation | *Planned* | Comparative black-box and trace assertion evaluation suite (Milestone 005). |
+| **Empirical Experiments** | Research | *Planned* | Empirical runs, Wilson score CIs, and McNemar significance testing (Milestone 005). |
 | **Any Security Guarantees** | Assurance | **Unverified** | Direct backend invariants verified under tested conditions; agent-mediated security remains unverified. |
 
 ---
@@ -99,60 +103,25 @@ Current Milestone: **Milestone 003 — Part 1.5: Research Consolidation & Method
 * **SQLite**: Embedded relational database facilitating fast, deterministic state resetting, ACID transactions, and atomic state diff comparisons.
 * **Pydantic v2 & Pydantic-Settings**: High-performance data validation, structured schema enforcement, and environment configuration.
 * **pytest & HTTPX**: Automated test framework with isolated in-memory/temporary file test fixtures and API client testing.
-* **Ollama with Qwen** (*Planned M003*): Local, reproducible LLM inference allowing deterministic, offline, and cost-controlled agent testing.
-* **LangGraph** (*Planned M003*): Explicit state-machine-based agent orchestration with inspectable graph states.
-* **Pandas** (*Planned M005*): Structured tabular analysis of evaluation metrics across experiment runs.
+* **Ollama with Qwen** (*Planned M004*): Local, reproducible LLM inference allowing deterministic, offline, and cost-controlled agent testing on CPU (quantized 3B/7B).
+* **LangGraph** (*Planned M004*): Encapsulated state-machine agent orchestration.
+* **Pandas & SciPy** (*Planned M005*): Structured tabular analysis and statistical significance testing (McNemar, Wilson score intervals).
 * **Promptfoo** (*Planned M005*): Industry-standard black-box LLM evaluation framework used as our comparative baseline.
 
 ### Deferred Technologies
-* **Docker**: Deferred to minimize environment friction during initial architectural bring-up. Local virtual environments are sufficient for Milestone 002. Containerization will be evaluated when multi-platform reproducibility is required.
+* **Docker**: Deferred to minimize environment friction during initial architectural bring-up. Local virtual environments are sufficient. Containerization will be evaluated when multi-platform reproducibility is required.
 * **Streamlit**: UI dashboards are deferred. Initial milestones focus exclusively on CLI execution, automated test passes, and JSON/CSV experiment outputs.
+* **OPA / SpiceDB**: Deferred. Backend ownership checks in SQLite fulfill isolation requirements with zero RPC overhead.
 
 ---
 
-## 5. Local Setup, Execution & Testing Commands
+## 5. Verification Commands
 
-### Installation
-Dependencies are tracked in [`requirements.txt`](requirements.txt):
-```powershell
-python -m pip install -r requirements.txt
-```
+To verify the existing test suite:
 
-### Running the Target Application Locally
-```powershell
-python -m uvicorn target_app.app:app --host 127.0.0.1 --port 8000 --reload
-```
-
-### Running Automated Checks & Tests
-Execute all tests (unit and integration):
-```powershell
+```bash
+# Run unit and integration test suite
 python -m pytest -v
 ```
 
-Execute only security invariant verification tests:
-```powershell
-python -m pytest -m security -v
-```
-
-Execute only fast unit tests:
-```powershell
-python -m pytest -m unit -v
-```
-
----
-
-## 6. Current Limitations
-
-1. **Synthetic Token Authentication**: The target application uses pre-shared local Bearer tokens (`test-token-user-a`, `test-token-user-b`, `test-token-user-c`) scoped strictly to deterministic offline research evaluation. It does not implement production authentication (no password hashing, JWT signing, or OAuth2 workflows).
-2. **SQLite File-Level Audit Integrity**: Audit events are exposed strictly as append-only operations through the application service. However, because SQLite is an embedded file without hardware-enforced write-once storage, direct filesystem access could alter logs out-of-band. External verification is deferred to the planned `security_engine`.
-3. **No Agent Orchestration (Milestone 002)**: The AI agent, tool-calling loop, and adversarial prompt evaluation are not yet implemented. The application currently functions as a standalone secure multi-tenant API.
-
----
-
-## 7. Next Steps (Recommended Milestone 003 — Part 2)
-
-Proceed to **Milestone 003 — Part 2: Agent Tool Integration & Instrumentation Foundation**, which will introduce:
-1. Pydantic tool definitions wrapping target application endpoints (`read_record`, `update_record`).
-2. Structured execution trace emission hooks for capturing tool invocations, arguments, caller contexts, and return payloads.
-3. Minimal LangGraph agent controller wired to local Ollama inference without implementing attack generation or security evaluators yet.
-
+All 24 automated tests currently pass deterministically.
