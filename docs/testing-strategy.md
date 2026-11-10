@@ -1,7 +1,8 @@
 # Testing & Verification Strategy
 
-**Milestone:** 002 — Secure Synthetic Target Application  
-**Status:** Tier 1 and Tier 2 Active (*Agent and benchmark tiers planned*)
+**Milestone:** 003 — Part 1.5: Consolidated Testing Strategy  
+**Status:** Tier 1 and Tier 2 Active (*Agent and benchmark experiment tiers planned*)  
+**Primary Research Reference:** See [`docs/research/research-direction-and-scope.md`](research/research-direction-and-scope.md) for full evaluation methodology, condition definitions, and independent ground-truth formulation.
 
 ---
 
@@ -81,9 +82,10 @@ The target AI agent must **never** evaluate its own security. All verdicts must 
 - **Status:** *Planned* (Milestone 004).
 
 ### Tier 5: Benchmark Experiments (`experiments/`)
-- **Scope:** Empirical evaluation comparing our Security Engine against external baselines (e.g., Promptfoo).
+- **Scope:** Empirical evaluation comparing detector reliability across the four evaluator conditions (Condition A — Response-only, Condition B — Trace-based, Condition C — Authorization-aware, Condition D — Full-evidence) and the baseline Promptfoo framework against independently established ground truth ($Y \in \{0, 1\}$).
 - **Focus:**
-  - Measuring false positive rate, false negative rate, and detection latency across balanced suites of benign and malicious prompts.
+  - Measuring Evaluator Precision, Recall, False Positive Rate (FPR), False Negative Rate (FNR), and F1-score across balanced benign and adversarial prompt suites.
+  - Quantifying specific failure modes: Silent Execution False Negatives, Blocked Attempt False Positives, and Hallucinated Leak False Positives.
 - **Status:** *Planned* (Milestone 005).
 
 ---

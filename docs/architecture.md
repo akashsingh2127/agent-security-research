@@ -1,7 +1,8 @@
 # System Architecture & Boundaries
 
-**Milestone:** 002 — Secure Synthetic Target Application  
-**Status:** Target Application Implemented & Tested (*Agent orchestration and Security Engine planned*)
+**Milestone:** 003 — Part 1.5: Consolidated Architecture & Boundaries  
+**Status:** Target Application Implemented & Tested (*Agent orchestration, instrumented harness, and evaluator conditions planned*)  
+**Primary Research Reference:** See [`docs/research/research-direction-and-scope.md`](research/research-direction-and-scope.md) for research framing, evaluator condition definitions, and ground-truth specifications.
 
 ---
 
@@ -81,17 +82,17 @@ The primary objective of this architecture is to provide an empirical research h
 - **Trust Assumption:** The target agent is considered **compromised or fallible**. Prompt injection, jailbreaking, or reasoning failures may induce the agent to attempt unauthorized tool calls. Backend controls enforce ground truth.
 
 ### 2.2 Security Engine (`security_engine`)
-- **Role:** Independent evaluation harness capable of judging whether an agent's actions conformed to formal security policies.
+- **Role:** Independent evaluation harness hosting the four experimental evaluator conditions (Condition A — Response-only, Condition B — Trace-based, Condition C — Authorization-aware, Condition D — Full-evidence) to benchmark detector accuracy against independent ground truth.
 - **Components:**
   - *Trace Interceptor:* Captures the sequence of tool invocations, parameter bindings, and executing tenant context.
   - *State Differ:* Takes cryptographic hashes and structured row diffs of SQLite before and after agent execution.
-  - *Policy Verifier:* Evaluates the combined trace and state delta against formal invariant rules (e.g., SEC-01).
-  - *Report Generator:* Emits structured JSON/CSV logs detailing policy compliance, violations, and false positive/negative rates.
+  - *Policy Verifier & Evaluator Conditions:* Implements the four evaluator conditions to determine their respective binary verdicts ($\hat{Y} \in \{0, 1\}$).
+  - *Report Generator:* Emits structured JSON/CSV logs detailing precision, recall, false-positive rate, and false-negative rate per condition.
 - **Trust Assumption:** The Security Engine is **trusted and authoritative**. It has direct, read-only observation capabilities over application state transitions and execution logs. The target agent has **zero access or authority** over this layer.
 
 ### 2.3 External Baseline (`baselines/`)
 - **Role:** Houses benchmark configurations for external security tools (primarily Promptfoo).
-- **Function:** Executes identical adversarial prompts against the target agent and records black-box verdicts based on prompt and output text alone, providing the empirical comparison for our research hypothesis.
+- **Function:** Executes identical adversarial prompts against the target agent and records black-box and trace-based verdicts under fair, documented configurations (e.g., response assertions, canary checks, and OpenTelemetry trace assertions), providing the empirical comparison for our research hypothesis.
 
 ---
 
@@ -99,14 +100,11 @@ The primary objective of this architecture is to provide an empirical research h
 
 When an evaluation run is executed:
 1. **State Snapshot:** The Security Engine records the pre-execution database state (table checksums and row snapshots).
-2. **Adversarial Stimulus:** An input prompt (benign or containing prompt injection attacks) is sent to the Target Application under a specific actor context (e.g., User A).
+2. **Adversarial Stimulus:** An input prompt (benign or containing adversarial BOLA instructions) is sent to the Target Application under a specific actor context (e.g., User A).
 3. **Trace Collection:** The Target Application executes. As tools are invoked, execution events (tool name, bound arguments, caller identity, return payload) are recorded in an immutable trace object.
 4. **State Diffing:** Once the agent turn completes, the Security Engine captures the post-execution database state and calculates the exact delta ($\Delta State$).
-5. **Policy Verification:** The Verifier inspects:
-   - *Was any unauthorized tool invoked?*
-   - *Did any tool invocation access or expose records of another tenant?*
-   - *Did the database state change for any records not owned by the calling tenant?*
-6. **Verdict Emission:** An authoritative binary verdict (`PASS` / `FAIL`) accompanied by structured diagnostic evidence is generated.
+5. **Evaluator Condition Execution:** Evaluator conditions A, B, C, and D are evaluated on their respective subsets of evidence.
+6. **Ground-Truth Comparison:** Verdicts are scored against the independently established ground truth ($Y \in \{0, 1\}$).
 
 ---
 
@@ -114,7 +112,7 @@ When an evaluation run is executed:
 
 * **Docker / Containerization:**
   - *Decision:* Deferred.
-  - *Justification:* During foundational design and early agent bring-up, local Python 3.12 virtual environments and local SQLite storage provide minimal overhead, rapid iteration cycles, and immediate test execution. Containerization adds orchestration complexity and will be introduced when multi-environment cross-validation is needed.
+  - *Justification:* During foundational design and early agent bring-up, local Python 3.12+ virtual environments and local SQLite storage provide minimal overhead, rapid iteration cycles, and immediate test execution. Containerization adds orchestration complexity and will be introduced when multi-environment cross-validation is needed.
 * **Streamlit / Web UI:**
   - *Decision:* Deferred.
   - *Justification:* Research evaluation requires rigorous, repeatable, scripted CLI batch runs and machine-readable data outputs (JSON/CSV) for statistical analysis. A graphical dashboard introduces maintenance overhead without contributing to empirical validity.
@@ -125,8 +123,9 @@ When an evaluation run is executed:
 
 - **System boundaries defined:** Milestone 001 (**Implemented**)
 - **Target App implementation:** Milestone 002 (**Implemented & Tested**)
-- **Target Agent & Tool bindings:** *Planned* (Milestone 003)
-- **Security Engine implementation:** *Planned* (Milestone 004)
-- **Baseline integration:** *Planned* (Milestone 005)
+- **Research Direction & Scope Consolidation:** Milestone 003 — Part 1.5 (**Implemented**)
+- **Target Agent & Tool bindings:** *Planned* (Milestone 003 — Part 2)
+- **Security Engine Evaluator Conditions:** *Planned* (Milestone 004)
+- **Baseline Promptfoo Integration:** *Planned* (Milestone 005)
 - **Any operational security guarantees:** **Unverified** (Direct backend invariants verified under tested conditions; agent-mediated security remains unverified)
 

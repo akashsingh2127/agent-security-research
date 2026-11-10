@@ -1,10 +1,12 @@
 # Policy-Based Security Verification for Tool-Using AI Agents
 
-[![Milestone](https://img.shields.io/badge/Milestone-002%20Target%20App-green.svg)](#implementation-status)
+[![Milestone](https://img.shields.io/badge/Milestone-003%20Part%201.5%20Consolidation-blue.svg)](#implementation-status)
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](pyproject.toml)
 [![Status](https://img.shields.io/badge/Status-Pre--Alpha%20%2F%20Research-orange.svg)](#project-goal--research-hypothesis)
 
 A research-grade evaluation harness and benchmark environment designed to investigate whether security evaluations of tool-using AI agents can be made more reliable by verifying observed authorization decisions and application state against explicit, formal security policies.
+
+**Primary Research Document:** See [`docs/research/research-direction-and-scope.md`](docs/research/research-direction-and-scope.md) for the consolidated research framework, four evaluator conditions, evaluator error taxonomy, and independent ground-truth definitions.
 
 ---
 
@@ -13,11 +15,11 @@ A research-grade evaluation harness and benchmark environment designed to invest
 ### Goal
 The goal of this research project is to design, implement, and evaluate an independent security verification harness for AI agents operating with tool access over multi-tenant application state.
 
-### Research Hypothesis (Provisional)
-> **Hypothesis:** Verifying observed execution traces (tool invocations, argument bindings, and authorization contexts) and persistent application state transitions against explicit formal security policies yields higher precision and lower false-negative rates in detecting agent security violations than prompt-level, black-box evaluators (e.g., Promptfoo).
+### Refined Research Question (Provisional Gap)
+> *"How do progressive levels of evaluator observability—ranging from black-box agent responses to execution traces, backend authorization decisions, and persistent database state diffs—impact the precision, recall, and false-negative rates of security violation detection in tool-using AI agents subjected to unauthorized cross-tenant data access (BOLA/BFLA) attacks?"*
 
 > [!IMPORTANT]
-> **Scientific Caveat:** This hypothesis is **provisional and currently unproven**. It represents the guiding research inquiry of this project, not an established scientific conclusion. No claims of novelty, superiority, or breakthrough are asserted prior to empirical validation against baselines.
+> **Scientific Caveat:** This hypothesis is **provisional and currently unproven**. Within the reviewed literature, no direct evaluation of detector reliability across progressive evidence conditions for multi-tenant authorization violations in tool-using agents was found. No claims of absolute novelty or superiority are asserted prior to empirical testing against baselines.
 
 ---
 
@@ -71,7 +73,7 @@ flowchart LR
 
 ## 3. Implementation Status
 
-Current Milestone: **Milestone 002 — Secure Synthetic Target Application**
+Current Milestone: **Milestone 003 — Part 1.5: Research Consolidation & Methodology Alignment**
 
 | Component | Category | Current Status | Description |
 | :--- | :--- | :--- | :--- |
@@ -79,8 +81,9 @@ Current Milestone: **Milestone 002 — Secure Synthetic Target Application**
 | **Harness Engineering Rules** | Governance | **Implemented** | Enforceable agent guidelines defined in [`AGENTS.md`](AGENTS.md). |
 | **Security Requirements** | Specification | **Implemented** | Formal invariants (SEC-01 multi-tenant isolation) in [`docs/security-requirements.md`](docs/security-requirements.md). |
 | **Threat Model** | Specification | **Implemented** | Trust boundaries, attacker models, and mitigations in [`docs/threat-model.md`](docs/threat-model.md). |
+| **Research Scope & Reference** | Research | **Implemented** | Central reference in [`docs/research/research-direction-and-scope.md`](docs/research/research-direction-and-scope.md) defining conditions A-D and ground truth. |
 | **Target App API** | Runtime | **Implemented & Tested** | FastAPI service with SQLite, deterministic seeding, auth, ownership enforcement, and audit events. |
-| **Target LangGraph Agent** | Runtime | *Planned* | Tool-using agent orchestrated with LangGraph and local Ollama (Milestone 003). |
+| **Target LangGraph Agent** | Runtime | *Planned* | Tool-using agent orchestrated with LangGraph and local Ollama (Milestone 003 Part 2). |
 | **Security Verifier** | Runtime | *Planned* | Execution trace and SQLite state diff verification engine (Milestone 004). |
 | **Promptfoo Baseline** | Evaluation | *Planned* | Comparative black-box evaluation suite (Milestone 005). |
 | **Empirical Protocol** | Research | *Planned* | Controlled experiment execution and statistical measurement (Milestone 005). |
@@ -146,10 +149,10 @@ python -m pytest -m unit -v
 
 ---
 
-## 7. Next Steps (Recommended Milestone 003)
+## 7. Next Steps (Recommended Milestone 003 — Part 2)
 
-Proceed to **Milestone 003: Agent Tool Integration & Instrumentation Foundation**, which will introduce:
+Proceed to **Milestone 003 — Part 2: Agent Tool Integration & Instrumentation Foundation**, which will introduce:
 1. Pydantic tool definitions wrapping target application endpoints (`read_record`, `update_record`).
-2. Structured execution trace emission hooks for capturing tool invocations, arguments, and caller contexts.
-3. Minimal LangGraph agent controller wired to local Ollama.
+2. Structured execution trace emission hooks for capturing tool invocations, arguments, caller contexts, and return payloads.
+3. Minimal LangGraph agent controller wired to local Ollama inference without implementing attack generation or security evaluators yet.
 
